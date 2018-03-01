@@ -15,6 +15,42 @@ class JackTokenizer { // hi
     this.token = {};
   }
 
+  static get types() {
+    return Object.freeze({
+      KEYWORD: "KEYWORD",
+      SYMBOL: "SYMBOL",
+      IDENTIFIER: "IDENTIFIER",
+      INT_CONST: "INTEGER CONSTANT",
+      STRING_CONST: "STRING CONSTANT",
+    });
+  }
+
+  static get keywords() {
+    return Object.freeze({
+      CLASS: 'CLASS',
+      METHOD: 'METHOD',
+      FUNCTION: 'FUNCTION',
+      CONSTRUCTOR: 'CONSTRUCTOR',
+      INT: 'INT',
+      BOOLEAN: 'BOOLEAN',
+      CHAR: 'CHAR',
+      VOID: 'VOID',
+      VAR: 'VAR',
+      STATIC: 'STATIC',
+      FIELD: 'FIELD',
+      LET: 'LET',
+      DO: 'DO',
+      IF: 'IF',
+      ELSE: 'ELSE',
+      WHILE: 'WHILE',
+      RETURN: 'RETURN',
+      TRUE: 'TRUE',
+      FALSE: 'FALSE',
+      NULL: 'NULL',
+      THIS: 'THIS',
+    });
+  }
+
   getLine() {
     let noComments = '';
     let whiteSpaceComment = /\/\/.*/;
@@ -55,29 +91,75 @@ class JackTokenizer { // hi
     const identifierRe = "\\b([a-z][a-z_0-9]*)\\b";
     const symbolRe = "([\\-\\[\\]{}().,;+*/&|<>=~])";
     const intConstRe = "(\\d+)";
-    const stringConstRe = '(".+")';
+    const stringConstRe = '"(.+)"';
     const tokens = new RegExp([keywordRe, identifierRe, symbolRe, intConstRe, stringConstRe].join('|'), "gi");
     let matches;
 
     tokens.lastIndex = this.lineIndex;
     if ((matches = tokens.exec(this.line)) !== null) {
-      const types = ["KEYWORD", "IDENTIFIER", "SYMBOL", "INT_CONST", "STRING_CONST"];
+      const { KEYWORD, IDENTIFIER, SYMBOL, INT_CONST, STRING_CONST } = JackTokenizer.types;
+      const captureGroup = [KEYWORD, IDENTIFIER, SYMBOL, INT_CONST, STRING_CONST];
       matches.slice(1).forEach((match, i) => {
         if (match) {
-          this.nextToken.type = types[i];
+          this.nextToken.type = captureGroup[i];
           this.nextToken.value = match;
-
-          if (this.nextToken.type === "STRING_CONST") {
-            this.nextToken.value = this.nextToken.value.slice(1, -1);
-          }
         }
       })
       this.lineIndex = tokens.lastIndex;
-      console.log(this.nextToken);
       return true;
     }
   }
+
+  advance() {
+    this.token = this.nextToken;
+  }
+
+  tokenType() {
+    return this.token.type;
+  }
+
+  keyword() {
+    return JackTokenizer.keywords[this.token.value.toUpperCase()];
+  }
+
+  symbol() {
+    return this.token.value;
+  }
+
+  identifier() {
+    return this.token.value;
+  }
+
+  intVal() {
+    return parseInt(this.token.value, 10);
+  }
+
+  stringVal() {
+    return this.nextToken.value;
+  }
+
+
 }
 
 var tk = new JackTokenizer("Square/Main.jack");
-while (tk.hasMoreTokens()) {}
+while (tk.hasMoreTokens()) {
+  tk.advance();
+  const {KEYWORD, SYMBOL, IDENTIFIER, INT_CONST, STRING_CONST} = JackTokenizer.types;
+  switch(tk.tokenType()) {
+    case KEYWORD:
+      console.log(tk.tokenType(), tk.keyword());
+      break;
+    case SYMBOL:
+      console.log(tk.tokenType(), tk.symbol());
+      break;
+    case IDENTIFIER:
+      console.log(tk.tokenType(), tk.identifier());
+      break;
+    case INT_CONST:
+      console.log(tk.tokenType(), tk.intVal());
+      break;
+    case STRING_CONST:
+      console.log(tk.tokenType(), tk.stringVal());
+      break;
+  }
+}
