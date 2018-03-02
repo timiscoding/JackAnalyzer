@@ -1,13 +1,10 @@
-/*
-comment
-// hi
-*/
-/** lala*/
 import readlines from 'n-readlines';
-class JackTokenizer { // hi
+import fs from 'fs';
 
-  constructor(filename) { /** comment */
-    this.readLine = new readlines(filename); /* something */
+class JackTokenizer {
+
+  constructor(filename) {
+    this.readLine = new readlines(filename);
     this.prevLine = '';
     this.line = '';
     this.lineIndex = 0;
@@ -17,44 +14,44 @@ class JackTokenizer { // hi
 
   static get types() {
     return Object.freeze({
-      KEYWORD: "KEYWORD",
-      SYMBOL: "SYMBOL",
-      IDENTIFIER: "IDENTIFIER",
-      INT_CONST: "INTEGER CONSTANT",
-      STRING_CONST: "STRING CONSTANT",
+      KEYWORD: "keyword",
+      SYMBOL: "symbol",
+      IDENTIFIER: "identifier",
+      INT_CONST: "integerConstant",
+      STRING_CONST: "stringConstant",
     });
   }
 
   static get keywords() {
     return Object.freeze({
-      CLASS: 'CLASS',
-      METHOD: 'METHOD',
-      FUNCTION: 'FUNCTION',
-      CONSTRUCTOR: 'CONSTRUCTOR',
-      INT: 'INT',
-      BOOLEAN: 'BOOLEAN',
-      CHAR: 'CHAR',
-      VOID: 'VOID',
-      VAR: 'VAR',
-      STATIC: 'STATIC',
-      FIELD: 'FIELD',
-      LET: 'LET',
-      DO: 'DO',
-      IF: 'IF',
-      ELSE: 'ELSE',
-      WHILE: 'WHILE',
-      RETURN: 'RETURN',
-      TRUE: 'TRUE',
-      FALSE: 'FALSE',
-      NULL: 'NULL',
-      THIS: 'THIS',
+      CLASS: 'class',
+      METHOD: 'method',
+      FUNCTION: 'function',
+      CONSTRUCTOR: 'constructor',
+      INT: 'int',
+      BOOLEAN: 'boolean',
+      CHAR: 'char',
+      VOID: 'void',
+      VAR: 'var',
+      STATIC: 'static',
+      FIELD: 'field',
+      LET: 'let',
+      DO: 'do',
+      IF: 'if',
+      ELSE: 'else',
+      WHILE: 'while',
+      RETURN: 'return',
+      TRUE: 'true',
+      FALSE: 'false',
+      NULL: 'null',
+      THIS: 'this',
     });
   }
 
   getLine() {
     let noComments = '';
     let whiteSpaceComment = /\/\/.*/;
-    const blockComment = /\/\*[^\*]*[^\/]*(\*\/)?$/;
+    const blockComment = /\/\*(?:\*(?!\/)|(?<!\*)\/|[^\*\/])*(\*\/)?$/; // match * if no / after it, match / if no * before it
 
     if (this.line = this.readLine.next()) {
       this.line = this.prevLine + this.line.toString().trim();
@@ -141,25 +138,46 @@ class JackTokenizer { // hi
 
 }
 
-var tk = new JackTokenizer("Square/Main.jack");
+var tk = new JackTokenizer(process.argv[2]);
+var outputFile = fs.openSync('tokens.xml', 'w+');
+fs.appendFileSync(outputFile, '<tokens>\n');
+
+const toEntity = (str) => str.replace(/(")|(<)|(>)|(&)/g, (m, quote, lt, gt, amp) => {
+  if (quote) {
+    return '&quot;';
+  } else if (lt) {
+    return '&lt;';
+  } else if (gt) {
+    return '&gt;';
+  } else if (amp) {
+    return '&amp;';
+  }
+});
+
 while (tk.hasMoreTokens()) {
   tk.advance();
   const {KEYWORD, SYMBOL, IDENTIFIER, INT_CONST, STRING_CONST} = JackTokenizer.types;
+  let line;
+  let type = tk.tokenType();
   switch(tk.tokenType()) {
     case KEYWORD:
-      console.log(tk.tokenType(), tk.keyword());
+      line = `<${type}> ${tk.keyword()} </${type}>`;
       break;
     case SYMBOL:
-      console.log(tk.tokenType(), tk.symbol());
+      line = `<${type}> ${toEntity(tk.symbol())} </${type}>`;
       break;
     case IDENTIFIER:
-      console.log(tk.tokenType(), tk.identifier());
+      line = `<${type}> ${tk.identifier()} </${type}>`;
       break;
     case INT_CONST:
-      console.log(tk.tokenType(), tk.intVal());
+      line = `<${type}> ${tk.intVal()} </${type}>`;
       break;
     case STRING_CONST:
-      console.log(tk.tokenType(), tk.stringVal());
+      line = `<${type}> ${toEntity(tk.stringVal())} </${type}>`;
       break;
   }
+    fs.appendFileSync(outputFile, line + '\n');
+
 }
+fs.appendFileSync(outputFile, '</tokens>\n');
+fs.closeSync(outputFile);
