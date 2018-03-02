@@ -10,7 +10,7 @@ files=(
 
 for file in ${files[@]}; do
   echo "Tokenizing $file"
-  node --no-warnings --experimental-modules JackTokenizer.mjs $file
+  node --no-warnings --experimental-modules JackTokenizerTest.mjs $file
   compareFile=$(echo $file | sed -re "s/(.*)\.jack$/\\1T.xml/")
   TextComparer.sh tokens.xml $compareFile
   if [ $? != 0 ]
