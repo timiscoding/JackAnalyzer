@@ -17,6 +17,18 @@ const tokenMethod = new Map([
 const TYPE_RULE = [INT, CHAR, BOOLEAN, IDENTIFIER];
 const KEYWORD_CONSTANT = [TRUE, FALSE, NULL, THIS];
 
+const toEntity = (str) => str.replace(/(")|(<)|(>)|(&)/g, (m, quote, lt, gt, amp) => {
+  if (quote) {
+    return '&quot;';
+  } else if (lt) {
+    return '&lt;';
+  } else if (gt) {
+    return '&gt;';
+  } else if (amp) {
+    return '&amp;';
+  }
+});
+
 class CompilationEngine {
   constructor(inputFile, outputFile) {
     this.inputFile = inputFile;
@@ -57,9 +69,12 @@ class CompilationEngine {
   eat(accepted) {
     this.indentLevel++;
     const thisTokenType = this.tk.tokenType();
-    const thisToken = this.getToken(thisTokenType);
+    let thisToken = this.getToken(thisTokenType);
 
     if (this.tokenOneOf(accepted)) {
+      if (this.tokenOneOf([STRING_CONST, SYMBOL])) {
+        thisToken = toEntity(thisToken);
+      }
       this.log(`<${thisTokenType.display}> ${thisToken.display || thisToken} </${thisTokenType.display}>`)
 
       if (this.tk.hasMoreTokens()) {
@@ -226,7 +241,7 @@ class CompilationEngine {
     }
     this.eat(';');
   }
-  // TODO
+
   compileExpression() {
     this.logWrapper(this.compileTerm, 'term');
 
@@ -235,9 +250,37 @@ class CompilationEngine {
       this.logWrapper(this.compileTerm, 'term');
     }
   }
-  // TODO
+
   compileTerm() {
-    this.eat([IDENTIFIER, ...KEYWORD_CONSTANT]);
+    if (this.tokenOneOf(IDENTIFIER)) {
+      this.eat(IDENTIFIER);
+
+      // cases '.' and '(' comprise the subroutineCall rule. The '[' case is array access
+      switch (this.tk.symbol()) {
+        case '.':
+          this.eat('.');
+          this.eat(IDENTIFIER);
+        case '(':
+          this.eat('(');
+          this.logWrapper(this.compileExpressionList, 'expressionList');
+          this.eat(')');
+          break;
+        case '[':
+          this.eat('[');
+          this.logWrapper(this.compileExpression, 'expression');
+          this.eat(']');
+          break;
+      }
+    } else if (this.tokenOneOf('(')) {
+      this.eat('(');
+      this.logWrapper(this.compileExpression, 'expression');
+      this.eat(')');
+    } else if (this.tokenOneOf(['-', '~'])) { // unaryOp term
+      this.eat(this.tk.symbol());
+      this.logWrapper(this.compileTerm, 'term');
+    } else {
+      this.eat([INT_CONST, STRING_CONST, ...KEYWORD_CONSTANT]);
+    }
   }
 
   compileExpressionList() {
@@ -254,5 +297,5 @@ class CompilationEngine {
 
 }
 
-const ce = new CompilationEngine('ExpressionLessSquare/SquareGame.jack', 'parsed.xml');
+const ce = new CompilationEngine('Square/SquareGame.jack', 'parsed.xml');
 ce.compileClass();
