@@ -8,13 +8,14 @@ const {
 } = TokenKeywords;
 
 const tokenMethod = new Map([
-  [KEYWORD, 'keyword'],
-  [SYMBOL, 'symbol'],
-  [IDENTIFIER, 'identifier'],
-  [INT_CONST, 'intVal'],
-  [STRING_CONST, 'stringVal']
+  [KEYWORD, JackTokenizer.prototype.keyword],
+  [SYMBOL, JackTokenizer.prototype.symbol],
+  [IDENTIFIER, JackTokenizer.prototype.identifier],
+  [INT_CONST, JackTokenizer.prototype.intVal],
+  [STRING_CONST, JackTokenizer.prototype.stringVal]
 ]);
 const TYPE_RULE = [INT, CHAR, BOOLEAN, IDENTIFIER];
+const KEYWORD_CONSTANT = [TRUE, FALSE, NULL, THIS];
 
 class CompilationEngine {
   constructor(inputFile, outputFile) {
@@ -29,7 +30,7 @@ class CompilationEngine {
   }
 
   getToken(type) {
-    return this.tk[tokenMethod.get(type)]();
+    return tokenMethod.get(type).call(this.tk);
   }
 
   log(str) {
@@ -44,13 +45,21 @@ class CompilationEngine {
     this.indentLevel--;
   }
 
+  tokenOneOf(accepted) {
+    const thisTokenType = this.tk.tokenType();
+    const thisToken = this.getToken(thisTokenType);
+
+    return (Array.isArray(accepted) &&
+      (accepted.includes(thisToken) || accepted.includes(thisTokenType)))
+      || accepted === thisToken || accepted === thisTokenType;
+  }
+
   eat(accepted) {
     this.indentLevel++;
     const thisTokenType = this.tk.tokenType();
     const thisToken = this.getToken(thisTokenType);
 
-    if ((Array.isArray(accepted) && (accepted.includes(thisToken) || accepted.includes(thisTokenType)))
-        || accepted === thisToken || accepted === thisTokenType) {
+    if (this.tokenOneOf(accepted)) {
       this.log(`<${thisTokenType.display}> ${thisToken.display || thisToken} </${thisTokenType.display}>`)
 
       if (this.tk.hasMoreTokens()) {
@@ -64,23 +73,20 @@ class CompilationEngine {
   }
 
   compileClass() {
-    console.log('um', IDENTIFIER);
     this.log('<class>');
     this.eat(CLASS);
     this.eat(IDENTIFIER);
     this.eat('{');
 
-    while (this.tk.tokenType === KEYWORD &&
-          this.tk.keyword() === STATIC ||
-          this.tk.keyword() === FIELD) {
+    while (this.tokenOneOf([STATIC, FIELD])) {
       this.logWrapper(this.compileClassVarDec, 'classVarDec');
     }
 
-    while (this.tk.tokenType() === KEYWORD &&
-        [CONSTRUCTOR, FUNCTION, METHOD].includes(this.tk.keyword())) {
+    while (this.tokenOneOf([CONSTRUCTOR, FUNCTION, METHOD])) {
       this.logWrapper(this.compileSubroutineDec, 'subroutineDec');
     }
 
+    this.eat('}');
     this.log('</class>');
   }
 
@@ -89,7 +95,7 @@ class CompilationEngine {
     this.eat(TYPE_RULE);
     this.eat(IDENTIFIER);
 
-    while (this.tk.tokenType() === SYMBOL && this.tk.symbol() === ',') {
+    while (this.tokenOneOf(',')) {
       this.eat(',');
       this.eat(IDENTIFIER);
     }
@@ -100,8 +106,153 @@ class CompilationEngine {
   compileSubroutineDec() {
     this.eat([CONSTRUCTOR, FUNCTION, METHOD]);
     this.eat([VOID, ...TYPE_RULE]);
+    this.eat(IDENTIFIER);
+    this.eat('(');
+    this.logWrapper(this.compileParameterList, 'parameterList');
+    this.eat(')');
+    this.logWrapper(this.compileSubroutineBody, 'subroutineBody');
   }
+
+  compileParameterList() {
+    if (this.tokenOneOf(TYPE_RULE)) {
+      this.eat(TYPE_RULE);
+      this.eat(IDENTIFIER);
+
+      while (this.tokenOneOf(',')) {
+        this.eat(',');
+        this.eat(TYPE_RULE);
+        this.eat(IDENTIFIER);
+      }
+    }
+  }
+
+  compileSubroutineBody() {
+    this.eat('{');
+
+    while (this.tokenOneOf(VAR)) {
+      this.logWrapper(this.compileVarDec, 'varDec');
+    }
+
+    this.logWrapper(this.compileStatements, 'statements');
+    this.eat('}');
+  }
+
+  compileVarDec() {
+    this.eat(VAR);
+    this.eat(TYPE_RULE);
+    this.eat(IDENTIFIER);
+
+    while (this.tokenOneOf(',')) {
+      this.eat(',');
+      this.eat(IDENTIFIER);
+    }
+
+    this.eat(';');
+  }
+
+  compileStatements() {
+    while (this.tokenOneOf([LET, IF, WHILE, DO, RETURN])) {
+      const capitalized = this.tk.keyword().display[0].toUpperCase() + this.tk.keyword().display.slice(1);
+      this.logWrapper(this[`compile${capitalized}Statement`], `${this.tk.keyword().display}Statement`);
+    }
+  }
+
+  compileLetStatement() {
+    this.eat(LET);
+    this.eat(IDENTIFIER);
+
+    if (this.tokenOneOf('[')) {
+      this.eat('[');
+      this.logWrapper(this.compileExpression, 'expression');
+      this.eat(']');
+    }
+
+    this.eat('=');
+    this.logWrapper(this.compileExpression, 'expression');
+    this.eat(';');
+  }
+
+  compileIfStatement() {
+    this.eat(IF);
+    this.eat('(');
+    this.logWrapper(this.compileExpression, 'expression');
+    this.eat(')');
+    this.eat('{');
+    this.logWrapper(this.compileStatements, 'statements');
+    this.eat('}');
+
+    if (this.tokenOneOf(ELSE)) {
+      this.eat(ELSE);
+      this.eat('{');
+      this.logWrapper(this.compileStatements, 'statements');
+      this.eat('}');
+    }
+  }
+
+  compileWhileStatement() {
+    this.eat(WHILE);
+    this.eat('(');
+    this.logWrapper(this.compileExpression, 'expression');
+    this.eat(')');
+    this.eat('{');
+    this.logWrapper(this.compileStatements, 'statements');
+    this.eat('}');
+  }
+
+  compileDoStatement() {
+    this.eat(DO);
+    // subroutineCall rule
+    this.eat(IDENTIFIER);
+    switch (this.tk.symbol()) {
+      case '.':
+        this.eat('.');
+        this.eat(IDENTIFIER);
+      case '(':
+        this.eat('(');
+        this.logWrapper(this.compileExpressionList, 'expressionList');
+        this.eat(')');
+        break;
+      default:
+        throw new Error('Failed to see "(" or "." token');
+    }
+
+    this.eat(';');
+  }
+
+  compileReturnStatement() {
+    this.eat(RETURN);
+    if (this.tokenOneOf([INT_CONST, STRING_CONST, ...KEYWORD_CONSTANT, IDENTIFIER, '(', '-', '~'])) {
+      this.logWrapper(this.compileExpression, 'expression');
+    }
+    this.eat(';');
+  }
+  // TODO
+  compileExpression() {
+    this.logWrapper(this.compileTerm, 'term');
+
+    while (this.tokenOneOf(['+', '-', '*', '/', '&', '|', '<', '>', '='])) {
+      this.eat(this.tk.symbol());
+      this.logWrapper(this.compileTerm, 'term');
+    }
+  }
+  // TODO
+  compileTerm() {
+    this.eat([IDENTIFIER, ...KEYWORD_CONSTANT]);
+  }
+
+  compileExpressionList() {
+    if (this.tokenOneOf([INT_CONST, STRING_CONST, ...KEYWORD_CONSTANT, IDENTIFIER, '(', '-', '~'])) {
+      this.logWrapper(this.compileExpression, 'expression');
+
+      while (this.tokenOneOf(',')) {
+        this.eat(',');
+        this.logWrapper(this.compileExpression, 'expression');
+      }
+    }
+  }
+
+
 }
 
-const ce = new CompilationEngine('ExpressionLessSquare/Square.jack', 'parsed.xml');
+const ce = new CompilationEngine('ExpressionLessSquare/SquareGame.jack', 'parsed.xml');
 ce.compileClass();
