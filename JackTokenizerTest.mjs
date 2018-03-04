@@ -1,5 +1,5 @@
 import fs from 'fs';
-import JackTokenizer from './JackTokenizer';
+import {default as JackTokenizer, TokenTypes} from './JackTokenizer';
 
 /** Reads a Jack file from command-line arg and writes the tokens to tokens.xml */
 
@@ -21,12 +21,12 @@ const toEntity = (str) => str.replace(/(")|(<)|(>)|(&)/g, (m, quote, lt, gt, amp
 
 while (tk.hasMoreTokens()) {
   tk.advance();
-  const { KEYWORD, SYMBOL, IDENTIFIER, INT_CONST, STRING_CONST } = JackTokenizer.types;
+  const { KEYWORD, SYMBOL, IDENTIFIER, INT_CONST, STRING_CONST } = TokenTypes;
   let line;
-  let type = tk.tokenType();
+  let type = tk.tokenType().display;
   switch (tk.tokenType()) {
     case KEYWORD:
-      line = `<${type}> ${tk.keyword()} </${type}>`;
+      line = `<${type}> ${tk.keyword().display} </${type}>`;
       break;
     case SYMBOL:
       line = `<${type}> ${toEntity(tk.symbol())} </${type}>`;

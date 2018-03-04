@@ -1,4 +1,37 @@
 import readlines from 'n-readlines';
+import Enum from './Enum';
+
+export const TokenTypes = new Enum({
+  KEYWORD: { value: 0, description: "keyword" },
+  SYMBOL: { value: 1, description: "symbol" },
+  IDENTIFIER: { value: 2, description: "identifier" },
+  INT_CONST: { value: 3, description: "integerConstant" },
+  STRING_CONST: { value: 4, description: "stringConstant" },
+});
+
+export const TokenKeywords = new Enum({
+  CLASS: { value: 0, description: 'class' },
+  METHOD: { value: 1, description: 'method' },
+  FUNCTION: { value: 2, description: 'function' },
+  CONSTRUCTOR: { value: 3, description: 'constructor' },
+  INT: { value: 4, description: 'int' },
+  BOOLEAN: { value: 5, description: 'boolean' },
+  CHAR: { value: 6, description: 'char' },
+  VOID: { value: 7, description: 'void' },
+  VAR: { value: 8, description: 'var' },
+  STATIC: { value: 9, description: 'static' },
+  FIELD: { value: 10, description: 'field' },
+  LET: { value: 11, description: 'let' },
+  DO: { value: 12, description: 'do' },
+  IF: { value: 13, description: 'if' },
+  ELSE: { value: 14, description: 'else' },
+  WHILE: { value: 15, description: 'while' },
+  RETURN: { value: 16, description: 'return' },
+  TRUE: { value: 17, description: 'true' },
+  FALSE: { value: 18, description: 'false' },
+  NULL: { value: 19, description: 'null' },
+  THIS: { value: 20, description: 'this' },
+});
 
 export default class JackTokenizer {
   constructor(filename) {
@@ -8,42 +41,6 @@ export default class JackTokenizer {
     this.lineIndex = 0;
     this.nextToken = {};
     this.token = {};
-  }
-
-  static get types() {
-    return Object.freeze({
-      KEYWORD: "keyword",
-      SYMBOL: "symbol",
-      IDENTIFIER: "identifier",
-      INT_CONST: "integerConstant",
-      STRING_CONST: "stringConstant",
-    });
-  }
-
-  static get keywords() {
-    return Object.freeze({
-      CLASS: 'class',
-      METHOD: 'method',
-      FUNCTION: 'function',
-      CONSTRUCTOR: 'constructor',
-      INT: 'int',
-      BOOLEAN: 'boolean',
-      CHAR: 'char',
-      VOID: 'void',
-      VAR: 'var',
-      STATIC: 'static',
-      FIELD: 'field',
-      LET: 'let',
-      DO: 'do',
-      IF: 'if',
-      ELSE: 'else',
-      WHILE: 'while',
-      RETURN: 'return',
-      TRUE: 'true',
-      FALSE: 'false',
-      NULL: 'null',
-      THIS: 'this',
-    });
   }
 
   getLine() {
@@ -92,7 +89,7 @@ export default class JackTokenizer {
 
     tokens.lastIndex = this.lineIndex;
     if ((matches = tokens.exec(this.line)) !== null) {
-      const { KEYWORD, IDENTIFIER, SYMBOL, INT_CONST, STRING_CONST } = JackTokenizer.types;
+      const { KEYWORD, IDENTIFIER, SYMBOL, INT_CONST, STRING_CONST } = TokenTypes;
       const captureGroup = [KEYWORD, IDENTIFIER, SYMBOL, INT_CONST, STRING_CONST];
       matches.slice(1).forEach((match, i) => {
         if (match) {
@@ -114,7 +111,7 @@ export default class JackTokenizer {
   }
 
   keyword() {
-    return JackTokenizer.keywords[this.token.value.toUpperCase()];
+    return TokenKeywords[this.token.value.toUpperCase()];
   }
 
   symbol() {
