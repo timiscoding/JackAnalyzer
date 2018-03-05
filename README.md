@@ -12,15 +12,41 @@ Reads and tokenizes a Jack file for use by the compilation engine.
 |Method|Args|Return|Function|
 |---|---|---|---|
 |constructor|filename:string||Jack file or dir|
-|getLine||String if file contains more lines. Else false|gets a line from the file and removes any white space/comments|
+|getLine||Returns string if file contains more lines. Else false|gets a line from the file and removes any white space/comments|
 |hasMoreTokens||Boolean|Do we have more tokens?|
 |advance|||sets the current token to the next token|
-|tokenType||One of JackTokenizer.types {`KEYWORD`, `SYMBOL`, `IDENTIFIER`, `INT_CONST`, `STRING_CONST`}|Returns the type of the token|
-|keyWord||One of JackTokenizer.keywords {`CLASS`, `METHOD`, `FUNCTION`, `CONSTRUCTOR`, `INT`, `BOOLEAN`, `CHAR`, `VOID`, `VAR`, `STATIC`, `FIELD`, `LET`, `DO`, `IF`, `ELSE`, `WHILE`, `RETURN`, `TRUE`, `FALSE`, `NULL`, `THIS`}|Returns the keyword. Should only be called if tokenType() is KEYWORD|
+|tokenType||TokenTypes enum `KEYWORD`, `SYMBOL`, `IDENTIFIER`, `INT_CONST`, `STRING_CONST`|Returns the type of the token|
+|keyWord||TokenKeywords enum `CLASS`, `METHOD`, `FUNCTION`, `CONSTRUCTOR`, `INT`, `BOOLEAN`, `CHAR`, `VOID`, `VAR`, `STATIC`, `FIELD`, `LET`, `DO`, `IF`, `ELSE`, `WHILE`, `RETURN`, `TRUE`, `FALSE`, `NULL`, `THIS`|Returns the keyword. Should only be called if tokenType() is KEYWORD|
 |symbol||string|Returns the symbol. Should only be called if tokenType() is SYMBOL|
 |identifier||string|Returns the identifier. Should only be called if tokenType() is IDENTIFIER|
 |intVal||Number|Returns the integer constant. Should only be called if tokenType() is INT_CONST|
 |stringVal||string|Returns the string constant. Should only be called if tokenType() is STRING_CONST|
+
+### CompilationEngine
+Parses Jack programs and generates an XML parse tree.
+
+|Method|Args|Return|Function|
+|---|---|---|---|
+|constructor|inputFile:string, outputFile:string||Creates a new instance with the given input Jack program and writes the XML data to the given output.|
+|compileClass|||Compiles a complete class|
+|compileClassVarDec|||Compiles a static/field declaration/s|
+|compileSubroutineDec|||Compiles a constructor/method/function declaration|
+|compileParameterList|||Compiles a possiblly empty subroutine parameter list not including the parentheses|
+|compileSubroutineBody|||Compiles a subroutine body including the curly braces|
+|compileVarDec|||Compiles a local variable declaration|
+|compileStatements|||Compiles a sequence of statements|
+|compileLetStatement|||Compiles an let (assignment) statement|
+|compileIfStatement|||Compiles an if statement with an optional else|
+|compileWhileStatment|||Compiles a while statement|
+|compileReturnStatement|||Compiles a return statement|
+|compileExpression|||Compiles an expression|
+|compileTerm|||Compiles a term. Part of an expression|
+|compileExpressionList|||Compiles an list of arguments|
+|eat|accepted:[TokenType\|TokenKeyword\|string]\|string\|TokenType\|TokenKeyword||Checks the current token is in the token whitelist. If true, advances to next token. Else throws error due to invalid syntax|
+|getToken|tokenType:TokenType|token value|Get the current token value given a token type|
+|log|string||Logs the token seen in XML|
+|logWrapper|compileCb:method, tag:string|Logs open/closing tags around a compileMethod|
+|tokenOneOf|accepted:[TokenType\|TokenKeyword\|string]\|string\|TokenType\|TokenKeyword|boolean|Checks whether current token belongs to one of the given tokens|
 
 # Build & Usage
 ```

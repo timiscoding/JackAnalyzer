@@ -29,7 +29,7 @@ const toEntity = (str) => str.replace(/(")|(<)|(>)|(&)/g, (m, quote, lt, gt, amp
   }
 });
 
-class CompilationEngine {
+export default class CompilationEngine {
   constructor(inputFile, outputFile) {
     this.inputFile = inputFile;
     this.outputFile = fs.openSync(outputFile, 'w+');
@@ -39,14 +39,16 @@ class CompilationEngine {
     if (this.tk.hasMoreTokens()) {
       this.tk.advance(); // set the first token
     }
+
+    this.compileClass();
   }
 
-  getToken(type) {
-    return tokenMethod.get(type).call(this.tk);
+  getToken(tokenType) {
+    return tokenMethod.get(tokenType).call(this.tk);
   }
 
   log(str) {
-    console.log('  '.repeat(this.indentLevel) + str);
+    fs.appendFileSync(this.outputFile, '  '.repeat(this.indentLevel) + str + '\n');
   }
 
   logWrapper(compileCb, tag) {
@@ -294,8 +296,8 @@ class CompilationEngine {
     }
   }
 
-
+  dispose() {
+    fs.closeSync(this.outputFile);
+    this.outputFile = null;
+  }
 }
-
-const ce = new CompilationEngine('Square/SquareGame.jack', 'parsed.xml');
-ce.compileClass();

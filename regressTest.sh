@@ -19,3 +19,15 @@ for file in ${files[@]}; do
     break
   fi
 done
+
+for file in ${files[@]}; do
+  node --no-warnings --experimental-modules JackAnalyzer.mjs $file
+  compareFile=$(echo $file | sed -re "s/(.*)\.jack$/\\1.xml/")
+  myFile=$(echo $file | sed -re "s/(.*)\.jack$/\\1_tim.xml/")
+  TextComparer.sh $myFile $compareFile
+  if [ $? != 0 ]
+  then
+    echo "$file COMPARISON FAILED"
+    break
+  fi
+done
