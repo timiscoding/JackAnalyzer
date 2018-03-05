@@ -30,7 +30,7 @@ Parses Jack programs and generates an XML parse tree.
 
 |Method|Args|Return|Function|
 |---|---|---|---|
-|constructor|inputFile:string, outputFile:string||Creates a new instance with the given input Jack program and writes the XML data to the given output.|
+|constructor|inputFile:string<br>outputFile:string||Creates a new instance with the given input Jack program and writes the XML data to the given output.|
 |compileClass|||Compiles a complete class|
 |compileClassVarDec|||Compiles a static/field declaration/s|
 |compileSubroutineDec|||Compiles a constructor/method/function declaration|
@@ -45,11 +45,11 @@ Parses Jack programs and generates an XML parse tree.
 |compileExpression|||Compiles an expression|
 |compileTerm|||Compiles a term. Part of an expression|
 |compileExpressionList|||Compiles an list of arguments|
-|eat|accepted:[TokenType\|TokenKeyword\|string]\|string\|TokenType\|TokenKeyword||Checks the current token is in the token whitelist. If true, advances to next token. Else throws error due to invalid syntax|
+|eat|accepted:<br>array\|string\|TokenType\|TokenKeyword||Checks the current token is in the token whitelist. If true, advances to next token. Else throws error due to invalid syntax|
 |getToken|tokenType:TokenType|token value|Get the current token value given a token type|
 |log|string||Logs the token seen in XML|
 |logWrapper|compileCb:method, tag:string|Logs open/closing tags around a compileMethod|
-|tokenOneOf|accepted:[TokenType\|TokenKeyword\|string]\|string\|TokenType\|TokenKeyword|boolean|Checks whether current token belongs to one of the given tokens|
+|tokenOneOf|accepted:<br>array\|string\|TokenType\|TokenKeyword|boolean|Checks whether current token belongs to one of the given tokens|
 
 # Build & Usage
 ```
