@@ -6,6 +6,9 @@ This is [project 10](http://nand2tetris.org/10.php) of the nand2tetris course.
 
 ## API
 
+### JackAnalyzer
+Reads in command line arg for dir/files with Jack programs and writes the parse tree to an XML file
+
 ### JackTokenizer
 Reads and tokenizes a Jack file for use by the compilation engine.
 
@@ -51,5 +54,9 @@ Parses Jack programs and generates an XML parse tree.
 # Build & Usage
 ```
 npm install
-node --experimental-modules JackTokenizer.mjs
+node --experimental-modules JackTokenizer.mjs <dir|file>
 ```
+XML files are written to the input dir with extension `_tim.xml`.
+
+# Tests
+Each of the directories (`Square`, `ExpressionLessSquare` and `ArrayTest`) contain a set of verified XML files for each Jack program: `xxxT.xml` is a list of tokens classified by type and value. `xxx.xml` is the parse tree. Run `regressTest.sh` to validate the generated XML (`xxx_tim.xml`) against the correct XML files.
