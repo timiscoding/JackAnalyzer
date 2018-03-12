@@ -1,6 +1,6 @@
 # Jack Analyzer
 
-Reads a syntactically valid Jack program file/dir and outputs XML that represents the parse tree.
+Reads a syntactically valid Jack program file/dir and outputs XML that represents the parse tree. The Jack grammar and syntax can be viewed on [slides 15-16 here.](http://nand2tetris.org/lectures/PDF/lecture%2010%20compiler%20I.pdf)
 
 This is [project 10](http://nand2tetris.org/10.php) of the nand2tetris course.
 
